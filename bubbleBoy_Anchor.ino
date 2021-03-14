@@ -111,8 +111,7 @@ void setup() {
   Serial.println(WiFi.localIP());
   delay(1500);
 
-  // Does not work if the first connection is made in onResult
-  // sendMqtt(String(NAME), BLEUUID("00000000-0000-0000-0000-000000000000"), 22);
+  // Conncect to MQTT server
   do {
     Serial.print(".");
     client.connect("bubbleboy");
