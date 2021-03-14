@@ -1,5 +1,7 @@
 # bubbleBoy
 
+![logo.png](logo.png)
+
 Stationary anchor for tracking beacons.
 
 This design was part of the [Make@thon](http://opto-cubes.de/?p=115) competition.
@@ -16,4 +18,8 @@ Following libraries are used:
 - `BLE*`  [espressif/arduino-esp32](https://github.com/espressif/arduino-esp32)
 - `PubSubClient` [knolleary/pubsubclient](https://github.com/knolleary/pubsubclient)
 
+## TODO / Improvements
 
+Duo to the time limits we were not able to implement all of the planed features.
+
+- *Downlink*: Send the data from the anchor to the beacon
