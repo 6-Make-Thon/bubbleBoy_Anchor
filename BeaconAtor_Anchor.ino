@@ -8,14 +8,24 @@
 // https://github.com/espressif/arduino-esp32/tree/master/libraries/BLE/src
 
 
+// BLE includes
 #include <BLEDevice.h>
 #include <BLEUtils.h>
 #include <BLEScan.h>
 #include <BLEAdvertisedDevice.h>
 #include <BLEBeacon.h>
 
+// MQTT
+#include <WiFi.h>         // ESP Wifi
+#include <PubSubClient.h> //MQTT Client
+
+#include "config.h"
+
 int scanTime = 5; //In seconds
 BLEScan* pBLEScan;
+
+WiFiClient espClient;           // WiFi
+PubSubClient client(espClient); // MQTT Node
 
 class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
     void onResult(BLEAdvertisedDevice advertisedDevice) {
@@ -34,14 +44,76 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
           Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
           Serial.printf("getRSSI: %d \n", advertisedDevice.getRSSI());
 
+          int rssi = advertisedDevice.getRSSI();
+
+          sendMqtt(String(NAME), uuid, rssi);
         }
 
     }
 };
 
+// Sendet Daten über MQTT an den Server
+void sendMqtt(String name, BLEUUID uuid, int rssi) {
+
+  do {
+    Serial.print(".");
+    // Try to connect - if fail repeat
+    if (client.connect("bubbleboy")) {
+      // 'beaconator/ble/NAME/X-KOORDINATE/Y-KOORDINATE/raw/MAC
+      String topic = "beaconator/ble/" + name + "/raw/" + String(uuid.toString().c_str());   // Topic = ID + Channel
+
+      Serial.println("MQTT publish to topic " + topic); // Debug
+      client.publish(topic.c_str(), String(rssi).c_str());   // Send Data
+    }
+    delay(500);
+  } while (!client.connected());
+
+}
+
+/* 
+ * Gets called when message is send to the scanner
+ */
+void mqttSubscriptionCallback(char* topic, byte* payload, unsigned int length) {
+  Serial.print("MQTT Subscription Callback: ");
+  Serial.print(topic);
+  Serial.print(" : ");
+  for(int i = 0; i < length; i++) {
+    Serial.printf("%x ", payload[i]);
+  }
+}
+
 void setup() {
+
   Serial.begin(115200);
+
+  // Init MQTT Client
+  client.setServer(MQTT_SERVER, MQTT_PORT); // MQTT Client
+
+  // Connect to WLAN
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.print("WiFi connected. IP address: ");
+  Serial.println(WiFi.localIP());
+  delay(1500);
+
+  // Does not work if the first connection is made in onResult
+  sendMqtt(String(NAME), BLEUUID("00000000-0000-0000-0000-000000000000"), 22);
+
+  /*
+   * Subscribe to MQTT topic
+   */
+  String subscribe_topic = "beaconator/ble/downlink/" + String(NAME) + "/#";
+  boolean subscribe_success = client.subscribe(subscribe_topic.c_str());
+  Serial.println(subscribe_success);
+  client.setCallback(mqttSubscriptionCallback);
+
   Serial.println("Scanning...");
+
+  // Init BLE Scanner
 
   BLEDevice::init("");
   pBLEScan = BLEDevice::getScan(); //create new scan
@@ -57,6 +129,14 @@ void loop() {
   // Serial.print("Devices found: ");
   // Serial.println(foundDevices.getCount());
   // Serial.println("Scan done!");
+  /*
+   * Clear result cache
+   */
   pBLEScan->clearResults();   // delete results fromBLEScan buffer to release memory
+
+  /*
+   * Let the PubSubClient client update the subscription
+   */
+  client.loop();
   delay(200);
 }
