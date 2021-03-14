@@ -18,6 +18,12 @@ Following libraries are used:
 - `BLE*`  [espressif/arduino-esp32](https://github.com/espressif/arduino-esp32)
 - `PubSubClient` [knolleary/pubsubclient](https://github.com/knolleary/pubsubclient)
 
+
+
+## Arrangement
+
+![aufbau.png](C:\Users\Simon\Desktop\Make@Thon\bubbleBoy_Anchor\aufbau.png)
+
 ## TODO / Improvements
 
 Duo to the time limits we were not able to implement all of the planed features.
