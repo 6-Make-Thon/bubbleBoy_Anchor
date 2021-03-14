@@ -80,6 +80,17 @@ void mqttSubscriptionCallback(char* topic, byte* payload, unsigned int length) {
   for(int i = 0; i < length; i++) {
     Serial.printf("%x ", payload[i]);
   }
+
+
+  // TODO
+  /*
+   * Sent the data to the shopping cart
+   * Connect to the beacon ofer BLE and send data
+   * One time connection - after that disconnect
+   */
+
+
+
 }
 
 void setup() {
@@ -101,7 +112,12 @@ void setup() {
   delay(1500);
 
   // Does not work if the first connection is made in onResult
-  sendMqtt(String(NAME), BLEUUID("00000000-0000-0000-0000-000000000000"), 22);
+  // sendMqtt(String(NAME), BLEUUID("00000000-0000-0000-0000-000000000000"), 22);
+  do {
+    Serial.print(".");
+    client.connect("bubbleboy");
+    delay(500);
+  } while (!client.connected());
 
   /*
    * Subscribe to MQTT topic
